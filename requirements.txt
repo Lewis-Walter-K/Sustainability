@@ -7,3 +7,7 @@ xgboost
 tensorflow==2.15.0
 keras==2.15.0
 smogn # for synthetic minority oversampling
+tensorflow
+pydantic
+fastapi
+uvicorn[standard]

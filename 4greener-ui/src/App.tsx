@@ -1,8 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Bell,
-  Settings as SettingsIcon
-} from "lucide-react";
+import { Bell } from "lucide-react";
 import { LangToggle, ThemeToggle } from "./components/AdditionComponents/ToggleFunc.tsx";
 import {Footer} from "./components/Footer";
 import { DashboardMain } from "./components/DashboardComponents/DashboardMain.tsx";
@@ -15,7 +12,6 @@ import { Nav, navBtn } from "./components/Nav.tsx";
 import { Forgot } from "./components/Login-Signup-Components/ForgotSection.tsx";
 import { Login } from "./components/Login-Signup-Components/LoginSection.tsx";
 import { Register } from "./components/Login-Signup-Components/RegisterSection.tsx";
-
 
 // 4Greener – Single-file React demo app with expanded features and richer visuals
 // TailwindCSS utilities only. Replace mock data and handlers with real APIs later.
@@ -199,27 +195,10 @@ export default function FourGreenerApp() {
 
   const hourOfDay = Array.from({ length: 24 }, (_, h) => ({ hour: `${String(h).padStart(2, "0")}:00`, kwh: +(0.22 + 0.18 * Math.sin((h / 24) * Math.PI * 2 + 0.6) + Math.max(0, (h - 19)) * 0.01).toFixed(2) }));
 
-  // Weekly heatmap (7 days x 24 hours) values 0..1
-  const weekHeat = Array.from({ length: 7 }, (_, d) =>
-    Array.from({ length: 24 }, (_, h) => 0.2 + 0.7 * Math.max(0, Math.sin((h / 24) * Math.PI * 2 + d * 0.4)))
-  );
-
   // Derived info
   const estCostVND = Math.round(kwhMonth * 2500); // mock tariff average
   const estCO2kg = +(kwhMonth * 0.82).toFixed(1); // mock factor 0.82 kg/kWh
   const peakHour = hourOfDay.reduce((a, b) => (b.kwh > a.kwh ? b : a));
-
-  // Notifications (mock)
-  const notifications = [
-    { id: 1, type: "warning", text: "Spike at 21:00 (+34%). Delay laundry 1h." },
-    { id: 2, type: "success", text: "On track: −6% vs daily goal." },
-    { id: 3, type: "info", text: "Tip: Enable A/C Eco at night." },
-  ];
-
-  const anomalies = [
-    { t: "21:00", delta: "+34%", note: "Laundry + A/C overlap" },
-    { t: "06:30", delta: "+18%", note: "Morning kettle peak" },
-  ];
 
   // Devices (mock)
   const devices = [

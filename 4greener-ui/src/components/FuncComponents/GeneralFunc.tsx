@@ -132,10 +132,11 @@ export function Header({ title, subtitle, icon, T }: { title: string; subtitle?:
 }
 
 export function KPIGrid({ kwhNow, kwhToday, kwhMonth, T }: { kwhNow: number; kwhToday: number; kwhMonth: number; T: any }) {
+  // Display units as Wh (values passed into this component are in Wh).
   const cards = [
-    { title: T.currentLoad, value: `${kwhNow} kWh`, diff: "+3.1% vs pred", icon: <Activity className="h-5 w-5" /> },
-    { title: T.todayUsage, value: `${kwhToday} kWh`, diff: "−6% vs goal", icon: <TrendingUp className="h-5 w-5" /> },
-    { title: T.monthUsage, value: `${kwhMonth} kWh`, diff: "+1.4% vs plan", icon: <BarChart2 className="h-5 w-5" /> },
+    { title: T.currentLoad, value: `${kwhNow} Wh`, diff: "+3.1% vs pred", icon: <Activity className="h-5 w-5" /> },
+    { title: T.todayUsage, value: `${kwhToday} Wh`, diff: "−6% vs goal", icon: <TrendingUp className="h-5 w-5" /> },
+    { title: T.monthUsage, value: `${kwhMonth} Wh`, diff: "+1.4% vs plan", icon: <BarChart2 className="h-5 w-5" /> },
   ];
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
