@@ -31,7 +31,7 @@ class ChartBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-export function ProfileMain({ T, setRoute, dark }: { T: any; setRoute: (r: any) => void; dark: boolean }) {
+export function ProfileMain({ T, setRoute, dark, userEmail, onSignOut }: { T: any; setRoute: (r: any) => void; dark: boolean; userEmail?: string; onSignOut?: () => void }) {
   const [predictionView, setPredictionView] = useState<"hour" | "day" | "month">("hour");
   const [showActual, setShowActual] = useState(true);
   const [showPred, setShowPred] = useState(true);
@@ -202,11 +202,16 @@ export function ProfileMain({ T, setRoute, dark }: { T: any; setRoute: (r: any) 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
           <CardHeader title={T.account} subtitle="Khang • Student" icon={<User className="h-4 w-4"/>} />
-          <div className="space-y-2 text-sm">
-            <Row label="Email" value="khang@example.edu.vn" />
-            <Row label="Room" value="2B-316 (Dorm 2)" />
-            <Row label={T.plan} value="Student – Basic" />
-          </div>
+            <div className="space-y-2 text-sm">
+              <Row label="Email" value={userEmail ?? "khang@example.edu.vn"} />
+              <Row label="Room" value="2B-316 (Dorm 2)" />
+              <Row label={T.plan} value="Student – Basic" />
+              {onSignOut ? (
+                <div className="mt-2">
+                  <button onClick={onSignOut} className="rounded-2xl border px-3 py-2 text-sm shadow-sm bg-red-300"><span className="font-semibold">Sign out</span></button>
+                </div>
+              ) : null}
+            </div>
         </Card>
         <Card>
           <CardHeader title={T.modelMetrics} subtitle="Forecast quality (mock)" icon={<Gauge className="h-4 w-4"/>} />

@@ -2,7 +2,7 @@ import {
   LogIn, LayoutDashboard, User, BarChart2, Zap, Settings as SettingsIcon, CreditCard, PlugZap
 } from "lucide-react";
 
-export function Nav({ title, route, setRoute, actions }: { title: string; route: string; setRoute: (r: any) => void; actions?: React.ReactNode }) {
+export function Nav({ title, route, setRoute, actions, isAuthenticated }: { title: string; route: string; setRoute: (r: any) => void; actions?: React.ReactNode; isAuthenticated?: boolean }) {
   return (
     <div className="sticky top-0 z-30 w-full border-b bg-white/70 backdrop-blur dark:bg-slate-900/50">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
@@ -11,7 +11,9 @@ export function Nav({ title, route, setRoute, actions }: { title: string; route:
           <span className="font-semibold">{title}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <button onClick={() => setRoute("login")} className={navBtn(route === "login")}><LogIn className="mr-1 h-4 w-4"/> Login</button>
+          {!isAuthenticated ? (
+            <button onClick={() => setRoute("login")} className={navBtn(route === "login")}><LogIn className="mr-1 h-4 w-4"/> Login</button>
+          ) : null}
           <button onClick={() => setRoute("dashboard")} className={navBtn(route === "dashboard")}><LayoutDashboard className="mr-1 h-4 w-4"/> Dashboard</button>
           <button onClick={() => setRoute("profile")} className={navBtn(route === "profile")}><User className="mr-1 h-4 w-4"/> Profile</button>
           <button onClick={() => setRoute("devices")} className={navBtn(route === "devices")}><PlugZap className="mr-1 h-4 w-4"/> Devices</button>

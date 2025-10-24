@@ -3,7 +3,7 @@ import { useState } from "react";
 import { getAuth, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
-const SignUp = () => {
+const SignUp = ({ notify, setRoute }: { notify?: (message: string, kind?: 'success'|'error'|'info') => void; setRoute?: (r: any) => void }) => {
   // Initialize Firebase authentication and navigation
   const auth = getAuth();
   const navigate = useNavigate();
@@ -23,11 +23,14 @@ const SignUp = () => {
     signInWithPopup(auth, new GoogleAuthProvider())
       .then(response => {
         console.log(response.user.uid);
-        navigate('/'); // Navigate to home or dashboard in other word
+  navigate('/'); // Navigate to home or dashboard in other word
+  try { setRoute?.('dashboard'); } catch(e) {}
+  try { notify?.('Signed up with Google', 'success'); } catch(e) {}
       })
       .catch(error => {
         console.log(error);
         setAuthing(false);
+        try { notify?.(error?.message || 'Sign-up failed', 'error'); } catch(e) {}
       })
   };
 
@@ -45,12 +48,15 @@ const SignUp = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then(response => {
         console.log(response.user.uid);
-        navigate('/'); // Navigate to home or dashboard in other word
+  navigate('/'); // Navigate to home or dashboard in other word
+  try { setRoute?.('dashboard'); } catch(e) {}
+  try { notify?.('Signed up', 'success'); } catch(e) {}
       })
       .catch(error => {
         console.log(error);
         setError(error.message);
         setAuthing(false);
+        try { notify?.(error?.message || 'Sign-up failed', 'error'); } catch(e) {}
       })
   };
 

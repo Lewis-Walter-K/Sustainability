@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Bell } from "lucide-react";
 import { LangToggle, ThemeToggle } from "./components/AdditionComponents/ToggleFunc.tsx";
+import { getAuth, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import {Footer} from "./components/Footer";
 import { DashboardMain } from "./components/DashboardComponents/DashboardMain.tsx";
 import { ProfileMain } from "./components/ProfileComponents/ProfileSection.tsx";
@@ -140,16 +141,71 @@ const STR = {
 } as const;
 
 export default function FourGreenerApp() {
+  const storedRoute = (typeof window !== 'undefined' && localStorage.getItem('app_route')) || 'login';
   const [route, setRoute] = useState<
     "login" | "register" | "forgot" | "dashboard" | "profile" | "devices" | "billing" | "compare" | "settings"
-  >("login");
+  >((storedRoute as any) || 'login');
   const [dark, setDark] = useState(false);
   const [lang, setLang] = useState<keyof typeof STR>("en");
   const T = STR[lang];
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
+
+  // subscribe to Firebase auth state and keep user/email in state
+  useEffect(() => {
+    try {
+      const auth = getAuth();
+      let first = true;
+      const unsub = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        if (first) {
+          // initial auth event: if user is already signed in and stored route is a login/register page,
+          // switch to dashboard once. Otherwise keep stored route so refresh preserves last page.
+          first = false;
+          try {
+            const sr = storedRoute;
+            if (u && (sr === 'login' || sr === 'register' || sr === 'forgot')) {
+              setRoute('dashboard');
+            }
+          } catch (e) {}
+        }
+      });
+      return () => unsub();
+    } catch (e) {
+      // firebase not initialized or not available during static analysis
+      console.warn('auth subscription failed', e);
+    }
+  }, []);
+
+  // persist route across refreshes so user returns to last visited page
+  useEffect(() => {
+    try {
+      localStorage.setItem('app_route', route);
+    } catch (e) {}
+  }, [route]);
+
+  async function handleSignOut() {
+    try {
+      const auth = getAuth();
+      await firebaseSignOut(auth);
+      setUser(null);
+      setRoute('login');
+    } catch (e) {
+      console.error('Sign out failed', e);
+    }
+  }
+
+  // simple toast/snackbar system
+  const [toasts, setToasts] = useState<{ id: number; message: string; kind?: 'success'|'error'|'info' }[]>([]);
+  const nextToastId = React.useRef(1);
+  function notify(message: string, kind: 'success'|'error'|'info' = 'info', ttl = 3500) {
+    const id = nextToastId.current++;
+    setToasts((t) => [...t, { id, message, kind }]);
+    setTimeout(() => setToasts((t) => t.filter(x => x.id !== id)), ttl);
+  }
 
   // ─── Mock data ─────────────────────────────────────────────────────────────
   const now = new Date();
@@ -235,6 +291,7 @@ export default function FourGreenerApp() {
         title={T.app}
         route={route}
         setRoute={setRoute}
+        isAuthenticated={!!user}
         actions={
           <div className="flex items-center gap-3">
             <button className={navBtn(false)} onClick={() => alert("Notifications panel opened (stub)")}> <Bell className="mr-1 h-4 w-4"/> {T.notificationCenter}</button>
@@ -244,15 +301,15 @@ export default function FourGreenerApp() {
         }
       />
 
-  {route === "login" && <Login />}
-  {route === "register" && <SignUp />}
+  {route === "login" && <Login notify={notify} setRoute={setRoute} />}
+  {route === "register" && <SignUp notify={notify} setRoute={setRoute} />}
       {route === "forgot" && <Forgot T={T} onBack={() => setRoute("login")} />}
 
       {route === "dashboard" && (
         <DashboardMain T={T} setRoute={setRoute} dark={dark} />
       )}
 
-      {route === "profile" && <ProfileMain T={T} setRoute={setRoute} dark={dark} />}
+      {route === "profile" && <ProfileMain T={T} setRoute={setRoute} dark={dark} userEmail={user?.email} onSignOut={handleSignOut} />}
 
       {route === "devices" && <DeviceSection T={T} setRoute={setRoute} dark={dark} />}
 
@@ -263,6 +320,16 @@ export default function FourGreenerApp() {
       {route === "settings" && <SettingSection T={T} dark={dark} setDark={setDark} lang={lang} setLang={setLang} />}
 
       <Footer />
+      {/* Toasts */}
+      <div aria-live="polite" className="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6">
+        <div className="w-full flex flex-col items-end space-y-4">
+          {toasts.map(t => (
+            <div key={t.id} className={`pointer-events-auto max-w-sm w-full rounded-xl p-3 shadow-lg ${t.kind === 'error' ? 'bg-red-600 text-white' : t.kind === 'success' ? 'bg-green-600 text-white' : 'bg-slate-800 text-white'}`}>
+              {t.message}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
