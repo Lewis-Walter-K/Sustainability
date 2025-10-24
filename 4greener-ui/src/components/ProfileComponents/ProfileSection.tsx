@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid, AreaChart, Area, BarChart, Bar } from "recharts";
 import { User, BarChart2, Gauge, FileDown, PlugZap } from "lucide-react";
 import { exportCSV, Container, Header, Card, CardHeader, SegmentedControl, Row } from "../FuncComponents/GeneralFunc.tsx";
@@ -35,6 +35,7 @@ export function ProfileMain({ T, setRoute, dark }: { T: any; setRoute: (r: any) 
   const [predictionView, setPredictionView] = useState<"hour" | "day" | "month">("hour");
   const [showActual, setShowActual] = useState(true);
   const [showPred, setShowPred] = useState(true);
+  const [dayHistory, setDayHistory] = useState<{ date: string; pred_total: number; actual_total: number }[]>([]);
 
   const now = new Date();
   const fmtTime = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -76,6 +77,40 @@ export function ProfileMain({ T, setRoute, dark }: { T: any; setRoute: (r: any) 
     return rows;
   }, []);
 
+  // Load saved day history (max 7 days) from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('profile_day_history');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setDayHistory(parsed.slice(-7).reverse());
+        }
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+  }, []);
+
+  function saveEndOfDay(pred_total: number, actual_total: number) {
+    try {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const entry = { date: dateStr, pred_total: +pred_total.toFixed(2), actual_total: +actual_total.toFixed(2) };
+      const raw = localStorage.getItem('profile_day_history');
+      let list: any[] = raw ? JSON.parse(raw) : [];
+      // append and keep most recent last
+      list.push(entry);
+      // keep only last 7 days
+      if (list.length > 7) list = list.slice(-7);
+      localStorage.setItem('profile_day_history', JSON.stringify(list));
+      // update state for immediate UI feedback (reverse so newest first)
+      setDayHistory(list.slice().reverse());
+    } catch (e) {
+      console.error('Failed to save day history', e);
+    }
+  }
+
   return (
     <Container className="py-6">
       <Header title={T.profile} subtitle="Usage trend & predictions" icon={<User className="h-5 w-5"/>} T={T} />
@@ -90,6 +125,33 @@ export function ProfileMain({ T, setRoute, dark }: { T: any; setRoute: (r: any) 
             { value: "month", label: T.monthPred },
           ]}
         />
+        <div className="ml-2">
+          <button
+            className="rounded-2xl border bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-800"
+            title="End day: save today's prediction and actual into Profile Day history"
+            onClick={() => {
+              // compute totals: prefer dailyData[29] as 'today' if using mock daily, else sum hourlyData
+              let pred_total = 0;
+              let actual_total = 0;
+              try {
+                // if dayHistory should represent 'today', derive from hourlyData (last 24 entries)
+                actual_total = dailyData[dailyData.length - 1]?.actual ?? 0;
+                pred_total = dailyData[dailyData.length - 1]?.pred ?? 0;
+                // fallback: sum hourly
+                if (!pred_total || !actual_total) {
+                  actual_total = hourlyData.reduce((s, r) => s + (r.actual || 0), 0);
+                  pred_total = hourlyData.reduce((s, r) => s + (r.pred || 0), 0);
+                }
+              } catch (e) {
+                actual_total = hourlyData.reduce((s, r) => s + (r.actual || 0), 0);
+                pred_total = hourlyData.reduce((s, r) => s + (r.pred || 0), 0);
+              }
+              saveEndOfDay(pred_total, actual_total);
+            }}
+          >
+            End day
+          </button>
+        </div>
         <div className="ml-auto flex items-center gap-3 rounded-2xl border bg-white px-3 py-2 shadow-sm dark:bg-slate-800">
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showActual} onChange={(e)=>setShowActual(e.target.checked)} /> {T.actual}</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showPred} onChange={(e)=>setShowPred(e.target.checked)} /> {T.predicted}</label>
@@ -112,7 +174,7 @@ export function ProfileMain({ T, setRoute, dark }: { T: any; setRoute: (r: any) 
                   <Line type="monotone" dataKey="pred" name={T.predicted} strokeWidth={2} strokeDasharray="4 2" dot={false} hide={!showPred} />
                 </LineChart>
               ) : predictionView === "day" ? (
-                <BarChart data={dailyData} margin={{ left: 8, right: 8 }}>
+                <BarChart data={dayHistory.length ? dayHistory.map(d=>({d: d.date, actual: d.actual_total, pred: d.pred_total})) : dailyData} margin={{ left: 8, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="d" />
                   <YAxis label={{ value: "kWh/day", angle: -90, position: "insideLeft", offset: 10 }} />

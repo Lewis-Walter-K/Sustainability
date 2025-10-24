@@ -10,8 +10,20 @@ import { CompareSection } from "./components/AdditionComponents/CompareSection.t
 import { SettingSection } from "./components/AdditionComponents/SettingSection.tsx";
 import { Nav, navBtn } from "./components/Nav.tsx";
 import { Forgot } from "./components/Login-Signup-Components/ForgotSection.tsx";
-import { Login } from "./components/Login-Signup-Components/LoginSection.tsx";
-import { Register } from "./components/Login-Signup-Components/RegisterSection.tsx";
+import Login  from "./components/Login-Signup-Components/Login.tsx";
+import SignUp from "./components/Login-Signup-Components/SignUp.tsx";
+import { initializeApp } from "firebase/app";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAxNuTY_TPghba48v1A2oHruPFNr_qRefI",
+  authDomain: "sustainability-6acf4.firebaseapp.com",
+  projectId: "sustainability-6acf4",
+  storageBucket: "sustainability-6acf4.firebasestorage.app",
+  messagingSenderId: "1042030904992",
+  appId: "1:1042030904992:web:f4478f94683f9da105abc5",
+  measurementId: "G-K1JR5SPERM"
+};
+initializeApp(firebaseConfig);
 
 // 4Greener – Single-file React demo app with expanded features and richer visuals
 // TailwindCSS utilities only. Replace mock data and handlers with real APIs later.
@@ -195,11 +207,6 @@ export default function FourGreenerApp() {
 
   const hourOfDay = Array.from({ length: 24 }, (_, h) => ({ hour: `${String(h).padStart(2, "0")}:00`, kwh: +(0.22 + 0.18 * Math.sin((h / 24) * Math.PI * 2 + 0.6) + Math.max(0, (h - 19)) * 0.01).toFixed(2) }));
 
-  // Derived info
-  const estCostVND = Math.round(kwhMonth * 2500); // mock tariff average
-  const estCO2kg = +(kwhMonth * 0.82).toFixed(1); // mock factor 0.82 kg/kWh
-  const peakHour = hourOfDay.reduce((a, b) => (b.kwh > a.kwh ? b : a));
-
   // Devices (mock)
   const devices = [
     { id: "mtr-001", name: "Smart Meter A", room: "2B-316", status: "online", baseW: 120 },
@@ -237,8 +244,8 @@ export default function FourGreenerApp() {
         }
       />
 
-      {route === "login" && <Login T={T} onSuccess={() => setRoute("dashboard")} onRegister={() => setRoute("register")} onForgot={() => setRoute("forgot")} />}
-      {route === "register" && <Register T={T} onSuccess={() => setRoute("dashboard")} onBack={() => setRoute("login")} />}
+  {route === "login" && <Login />}
+  {route === "register" && <SignUp />}
       {route === "forgot" && <Forgot T={T} onBack={() => setRoute("login")} />}
 
       {route === "dashboard" && (
